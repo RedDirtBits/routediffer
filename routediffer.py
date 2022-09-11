@@ -2,10 +2,6 @@
 import csv
 import json
 from paths import Paths
-from netmiko import ConnLogOnly
-from dotenv import load_dotenv
-
-load_dotenv()
 
 # NOTE:
 # - TextFSM is not looking at or parsing lines in the table such as: 10.20.22.195/32, ubest/mbest: 1/0
