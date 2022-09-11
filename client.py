@@ -72,7 +72,7 @@ class SSHClient:
         # make sure that we have logged into the device.  Check the connection
         # handler if this is encountered
         if self.session is None:
-            sys.exit(f"Unable To Log in to: {self.hostname}")
+            return sys.exit(f"Unable To Log in to: {self.hostname}")
 
         # in most cases, particularly in cases using TACACS, we will be dropped into
         # privileged EXEC mode on the device.  However, as a sanity check, let's make
