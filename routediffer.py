@@ -1,15 +1,10 @@
 
-import csv
 import json
 from paths import Paths
+from jdiff import extract_data_from_json, CheckType
 
-# NOTE:
-# - TextFSM is not looking at or parsing lines in the table such as: 10.20.22.195/32, ubest/mbest: 1/0
-#   - Its only grabbing the actual route(s) that follow those lines
-# - The route prefix should be unique and could be a candidate for a key
-
-nxos_headers: list = ["vrf", "protocol", "type", "network", "mask", "distance", "metric", "nexthop_ip", "nexthop_if", "uptime", "nexthop_vrf", "tag", "segid", "tunnelid", "encap"]
-ios_headers: list = ["protocol", "type", "network", "mask", "distance", "metric", "nexthop_ip", "nexthop_if", "uptime"]
+# nxos_headers: list = ["vrf", "protocol", "type", "network", "mask", "distance", "metric", "nexthop_ip", "nexthop_if", "uptime", "nexthop_vrf", "tag", "segid", "tunnelid", "encap"]
+# ios_headers: list = ["protocol", "type", "network", "mask", "distance", "metric", "nexthop_ip", "nexthop_if", "uptime"]
 
 
 def get_routing_table(ipaddr: str = None, credential_id: str = None, platform: str = None):
@@ -34,45 +29,53 @@ def get_routing_table(ipaddr: str = None, credential_id: str = None, platform: s
 
         routing_table = ssh_client.session.send_command(CiscoCommands.show_routes(), use_textfsm=True, strip_prompt=True, strip_command=True)
 
+        # We need to remove the "uptime" values here.  That will trigger any attempt at comparison as it's always changing
+        for route in routing_table:
+            del route["uptime"]
+
         # disconnect from the client
         ssh_client.session.disconnect()
 
         return routing_table
 
-def create_master_route_table(routes: json, headers: list = []):
+def create_master_route_table(routes: json = {}):
 
-    with open("master_route_table.csv", "w") as master_copy:
+    if len(routes) == 0:
 
-        write_routes = csv.DictWriter(master_copy, fieldnames=headers)
-        write_routes.writeheader()
-
-        for route in routes:
-            write_routes.writerow({
-                "vrf": route["vrf"],
-                "protocol": route["protocol"],
-                "type": route["type"],
-                "network": route["network"],
-                "mask": route["mask"],
-                "distance": route["distance"],
-                "metric": route["metric"],
-                "nexthop_ip": route["nexthop_ip"],
-                "nexthop_if": route["nexthop_if"],
-                "nexthop_vrf": route["nexthop_vrf"],
-            })
-
-# if the master routing table does not already exist, it needs to be created
-if not Paths.file_exists("master_route_table.csv"):
-
-    try:
-        routing_table = get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
-    except ValueError as e:
-        print(e)
-    except ImportError as e:
-        print(e)
-    else:
-        # if there are no errors from getting the routing table, then parse it out into the CSV file
-        create_master_route_table(routes=routing_table, headers=nxos_headers)
-
-else:
-    pass
+        raise ValueError("It appears the routing table is missing")
     
+    else:
+
+        with open("master_route_table.json", "w") as master:
+
+            master.write(json.dumps(routes))
+
+def compare_routing_tables(reference_routes):
+
+    # If the master/reference file has not been created, no need to proceed
+    # as we have to have a SOT
+    if not Paths.file_exists("master_route_table.json"):
+
+        return f"Missing the Master Route Table"
+
+    else:
+
+        master_route_table = reference_routes
+
+        # Get the current routing table to be compared against the reference
+        migrated_routes = get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
+
+        # initialize jdiff
+        comparison = CheckType.create(check_type="exact_match")
+
+        # evaluate the reference against the new/post-migration routing table and flag the differences
+        differences = comparison.evaluate(master_route_table, migrated_routes)
+        print(differences)
+
+with open("master_route_table.json") as master:
+
+    routes = json.load(master)
+    compare_routing_tables(reference_routes=routes)
+
+# some_routes = get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
+# create_master_route_table(get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
