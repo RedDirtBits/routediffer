@@ -2,12 +2,13 @@
 import json
 from paths import Paths
 
+
 def get_routing_table(ip_address: str, credential_id: str, platform: str):
     """
     get_routing_table summary
         Logs into a core switch/router and gets the current routing table.  On the initial run
         it checks if the routes have already been written to a file.  If that has not taken place
-        the file is created and the routes saved as a source of truth.  Otherwise the routes in 
+        the file is created and the routes saved as a source of truth.  Otherwise, the routes in
         TextFSM structured format are returned for use elsewhere.
 
     Args:
@@ -112,7 +113,7 @@ def compare_routing_tables(ip_address: str, credential_id: str, platform: str):
             for reference in pre_migration_route_table:
                 route = reference["network"]
 
-                # loop through the post-migratin routes and pull out the network and add it to a list
+                # loop through the post-migration routes and pull out the network and add it to a list
                 for comparison in post_migration_routes:
                     networks.append(comparison["network"])
 
