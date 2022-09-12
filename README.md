@@ -12,8 +12,8 @@ To peform a comparison run the **compare_routing_tables** function.  This will c
 
 # Filenames
 
-Source of Truth file: **pre_migration_route_table.json**
-Differences file: **missing_routes.json**
+- Source of Truth file: **pre_migration_route_table.json**
+- Differences file: **missing_routes.json**
 
 # Platforms
 
