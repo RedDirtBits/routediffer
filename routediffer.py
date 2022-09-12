@@ -1,16 +1,35 @@
 
 import json
 from paths import Paths
-from jdiff import extract_data_from_json, CheckType
-
-# nxos_headers: list = ["vrf", "protocol", "type", "network", "mask", "distance", "metric", "nexthop_ip",
-# "nexthop_if", "uptime", "nexthop_vrf", "tag", "segid", "tunnelid", "encap"]
-
-# ios_headers: list = ["protocol", "type", "network", "mask", "distance", "metric", "nexthop_ip",
-# "nexthop_if", "uptime"]
-
 
 def get_routing_table(ip_address: str, credential_id: str, platform: str):
+    """
+    get_routing_table summary
+        Logs into a core switch/router and gets the current routing table.  On the initial run
+        it checks if the routes have already been written to a file.  If that has not taken place
+        the file is created and the routes saved as a source of truth.  Otherwise the routes in 
+        TextFSM structured format are returned for use elsewhere.
+
+    Args:
+        ip_address (str): The IP address of the core switch/router to be logged into.  This can
+        also be a hostname but note that the hostname should be resolvable to an IP address.
+
+        credential_id (str): This is the prefix used to identify the login credential set in the
+        user provided .env file.  Assuming, for example your username was test_username, the 
+        credential ID would be "test".  This assumes that all credentials follow this patter.
+        Example: test_username, test_password, test_secret, etc.
+
+        platform (str): The Netmiko platform identifier.  Can be "cisco_ios" for IOS based
+        devices, "cisco_nexus" for Nexus devices, etc.
+
+    Raises:
+        ValueError: A ValueError is returned if any the arguments, "ip_address", "credential_id"
+        or "platform" are missing
+
+    Returns:
+        dict: The device routing table in TextFSM structured format if the source of truth file
+        has already been created
+    """
 
     # run the import statements from within the function as it makes it easier to work with the log in
     from client import SSHClient
@@ -48,10 +67,31 @@ def get_routing_table(ip_address: str, credential_id: str, platform: str):
 
     else:
 
-        return
+        return routing_table
 
 
 def compare_routing_tables(ip_address: str, credential_id: str, platform: str):
+    """
+    compare_routing_tables summary
+        Uses the source of truth file created from the "get_routing_table" function and compares
+        that to the current routing table to detect any missing routes from the current routing
+        table and those stored in the source of truth file.
+
+    Args:
+        ip_address (str): The IP address of the core switch/router to be logged into.  This can
+        also be a hostname but note that the hostname should be resolvable to an IP address.
+
+        credential_id (str): This is the prefix used to identify the login credential set in the
+        user provided .env file.  Assuming, for example your username was test_username, the 
+        credential ID would be "test".  This assumes that all credentials follow this patter.
+        Example: test_username, test_password, test_secret, etc.
+
+        platform (str): The Netmiko platform identifier.  Can be "cisco_ios" for IOS based
+        devices, "cisco_nexus" for Nexus devices, etc.
+    """
+
+    networks = []
+    missing_routes = []
 
     # If the master/reference file has not been created, no need to proceed as we have to have a SOT
     if not Paths.file_exists("pre_migration_route_table.json"):
@@ -61,23 +101,41 @@ def compare_routing_tables(ip_address: str, credential_id: str, platform: str):
     else:
 
         # Get the current routing table to be compared against the reference
-        migrated_routes = get_routing_table(ip_address = ip_address, credential_id = credential_id, platform = platform)
+        post_migration_routes = get_routing_table(ip_address = ip_address, credential_id = credential_id, platform = platform)
 
         # open the pre-migration route table for comparison
         with open("pre_migration_route_table.json", "r") as reference_routes:
 
             pre_migration_route_table = json.load(reference_routes)
 
-            # initialize jdiff
-            comparison = CheckType.create(check_type="exact_match")
+            # loop through the pre-migration routes and pull out the network
+            for reference in pre_migration_route_table:
+                route = reference["network"]
 
-            # evaluate the reference against the new/post-migration routing table and flag the differences. if the tables
-            # are the same a tuple ({}, True) will be returned, otherwise the differences will.
-            differences = comparison.evaluate(pre_migration_route_table, migrated_routes)
+                # loop through the post-migratin routes and pull out the network and add it to a list
+                for comparison in post_migration_routes:
+                    networks.append(comparison["network"])
 
-            # for now.  probably need to write this to file just for sanity's sake or perhapd return and write to file
-            return differences
+                # probably not the most efficient way to do this, but its stupid simple.
+                # take the pre-migration network and see if it is in the list of networks from the 
+                # post-migration networks.  if it isn't, append the entire pre-migration route to the 
+                # missing routes list
+                if route not in networks:
+                    missing_routes.append(reference)
+                else:
+                    # if the pre-migration network is in the list, the clear the list and continue
+                    networks = []
+                    continue
+        
+        # if the missing routes list is empty, it means there are no missing routes and therefore nothing to do
+        if len(missing_routes) == 0:
+            return
+        else:
+            # otherwise convert the missing routes to JSON and write to file
+            with open("missing_routes.json", "w") as f:
+                f.write(json.dumps(missing_routes))
+
 
 # let's test this thing out
-# print(compare_routing_tables(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
-get_routing_table(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
+print(compare_routing_tables(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
+# get_routing_table(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
