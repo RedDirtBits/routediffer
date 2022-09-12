@@ -3,7 +3,6 @@ cffi==1.15.1
 cryptography==38.0.1
 deepdiff==5.8.1
 future==0.18.2
-jdiff==0.0.1
 jmespath==0.10.0
 netmiko==4.1.2
 ntc-templates==3.1.0
