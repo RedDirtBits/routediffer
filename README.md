@@ -6,9 +6,9 @@ Admittedly, this is not a common task nor I suspect a common need for such a uti
 
 # Usage
 
-Simply run the **get_routing_table** function, passing in the required arguments to create the source of truth file.  Ideally, and perhaps obviously, this should be done prior to any migrations/changes are peformed.  If the function is run again, it will check for the source of truth file and if it is found it will simply return the TextFSM formatted routes and not re-write the file.
+Simply run the `get_routing_table` function, passing in the required arguments to create the source of truth file.  Ideally, and perhaps obviously, this should be done prior to any migrations/changes are peformed.  If the function is run again, it will check for the source of truth file and if it is found it will simply return the TextFSM formatted routes and not re-write the file.
 
-To peform a comparison run the **compare_routing_tables** function.  This will call the **get_routing_table** function to get the current routes the peform a comparison between the source of truth file (pre-migration/pre-changes) and look for any differences.  If no differences are detected, no actions will be taken (returns None).  However, if differences are found then those will be stored in JSON format and saved to file.
+To peform a comparison run the `compare_routing_tables` function.  This will call the `get_routing_table` function to get the current routes the peform a comparison between the source of truth file (pre-migration/pre-changes) and look for any differences.  If no differences are detected, no actions will be taken (returns None).  However, if differences are found then those will be stored in JSON format and saved to file.
 
 # Filenames
 
