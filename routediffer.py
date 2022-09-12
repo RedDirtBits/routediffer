@@ -10,7 +10,7 @@ from jdiff import extract_data_from_json, CheckType
 def get_routing_table(ipaddr: str = None, credential_id: str = None, platform: str = None):
 
     # run the import statemements from within the function as it makes it easier to 
-    # work with the loggging in
+    # work with the log in
     from client import SSHClient
     from ciscocmds import CiscoCommands
 
@@ -36,19 +36,15 @@ def get_routing_table(ipaddr: str = None, credential_id: str = None, platform: s
         # disconnect from the client
         ssh_client.session.disconnect()
 
-        return routing_table
-
-def create_master_route_table(routes: json = {}):
-
-    if len(routes) == 0:
-
-        raise ValueError("It appears the routing table is missing")
-    
-    else:
+    # check to see if the master routes file has already been created.
+    if not Paths.file_exists("master_route_table.json"):
 
         with open("master_route_table.json", "w") as master:
+            master.write(json.dumps(routing_table))
 
-            master.write(json.dumps(routes))
+    else:
+
+        return
 
 def compare_routing_tables(reference_routes):
 
@@ -72,10 +68,6 @@ def compare_routing_tables(reference_routes):
         differences = comparison.evaluate(master_route_table, migrated_routes)
         print(differences)
 
-with open("master_route_table.json") as master:
 
-    routes = json.load(master)
-    compare_routing_tables(reference_routes=routes)
-
-# some_routes = get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
+get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
 # create_master_route_table(get_routing_table(ipaddr="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
