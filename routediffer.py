@@ -128,9 +128,14 @@ def compare_routing_tables(ip_address: str, credential_id: str, platform: str):
                     networks = []
                     continue
         
-        # if the missing routes list is empty, it means there are no missing routes and therefore nothing to do
+        # if the missing routes list is empty, it means there are no missing routes
         if len(missing_routes) == 0:
-            return
+
+            # return something to the user even if there are no differences
+            missing_routes.append({"Routes Missing":0})
+            missing_routes = json.dumps(missing_routes)
+            return missing_routes
+
         else:
             # otherwise convert the missing routes to JSON and write to file
             with open("missing_routes.json", "w") as f:
