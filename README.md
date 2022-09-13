@@ -19,4 +19,5 @@ To peform a comparison run the `compare_routing_tables` function.  This will cal
 
 As of this writing, the script has been tested only on the devices listed below.  This will be updated as more testing is done.
 
-- Cisco Nexus 7k (platform = "cisco_nxos")
+- Cisco Nexus (platform = "cisco_nxos")
+- Cisco IOS v15.2 (platform = "cisco_ios)
