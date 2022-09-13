@@ -144,4 +144,4 @@ def compare_routing_tables(ip_address: str, credential_id: str, platform: str):
 
 # let's test this thing out
 print(compare_routing_tables(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
-# get_routing_table(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos")
+# get_routing_table(ip_address="192.168.217.2", credential_id="gns3", platform="cisco_ios")
