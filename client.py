@@ -79,6 +79,8 @@ class SSHClient:
         # sure and if not run enable to get there
         if not self.session.check_enable_mode():
             self.session.enable()
+        else:
+            self.device_hostname = self.session.find_prompt()[:-1]
 
         return self.session
 
