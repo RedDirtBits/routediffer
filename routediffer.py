@@ -1,9 +1,13 @@
 
 import json
 from paths import Paths
+from client import SSHClient
+from ciscocmds import CiscoCommands
 
+# initialize the commands class
+cmds = CiscoCommands()
 
-def get_routing_table(ip_address: str, credential_id: str, platform: str):
+def get_routing_table(ip_address: str, credential_id: str, platform_id: str):
     """
     get_routing_table summary
         Logs into a core switch/router and gets the current routing table.  On the initial run
@@ -32,24 +36,20 @@ def get_routing_table(ip_address: str, credential_id: str, platform: str):
         has already been created
     """
 
-    # run the import statements from within the function as it makes it easier to work with the log in
-    from client import SSHClient
-    from ciscocmds import CiscoCommands
-
     # let's make sure the required information has been provided and if not try and gracefully handle that
-    if not ip_address or not credential_id or not platform:
+    if not ip_address or not credential_id or not platform_id:
 
-        raise ValueError("IP Address, Credential ID and Platform Type are required")
+        raise ValueError("IP Address/Hostname, Credential ID and Platform ID are required")
     
     else:
 
         # if there were no exceptions, everything needed should be preset therefore proceed with
         # the log in to get the routing table
-        ssh_client = SSHClient(hostname=ip_address, profile=credential_id, platform=platform)
+        ssh_client = SSHClient(hostname=ip_address, credential_id=credential_id, platform_id=platform_id)
         ssh_client.ssh_host_login()
 
         routing_table = ssh_client.session.send_command(
-            CiscoCommands.show_routes(), use_textfsm=True, strip_prompt=True, strip_command=True)
+            cmds.show_routes(), use_textfsm=True, strip_prompt=True, strip_command=True)
 
         # We need to remove the "uptime" values here.  That will trigger any attempt at comparison as it's
         # always changing
@@ -143,5 +143,5 @@ def compare_routing_tables(ip_address: str, credential_id: str, platform: str):
 
 
 # let's test this thing out
-print(compare_routing_tables(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
-# get_routing_table(ip_address="192.168.217.2", credential_id="gns3", platform="cisco_ios")
+# print(compare_routing_tables(ip_address="192.168.217.2", credential_id="nxos", platform="cisco_nxos"))
+get_routing_table(ip_address="192.168.140.2", credential_id="gns3", platform_id="cisco_ios")
